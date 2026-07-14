@@ -1,0 +1,1 @@
+const router=require('express').Router(),c=require('../controllers/cartController'),{authenticate}=require('../middleware/auth');router.use(authenticate);router.get('/',c.list);router.post('/',c.add);router.put('/:id',c.update);router.delete('/:id',c.remove);module.exports=router;

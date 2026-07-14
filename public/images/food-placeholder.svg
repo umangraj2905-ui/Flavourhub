@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="520" viewBox="0 0 800 520" role="img" aria-labelledby="title desc">
+  <title id="title">FlavorHub food placeholder</title><desc id="desc">A warm illustrated plate of food</desc>
+  <rect width="800" height="520" fill="#fff3dc"/><circle cx="400" cy="265" r="180" fill="#ffc107" opacity=".25"/><circle cx="400" cy="265" r="142" fill="#ffffff"/><circle cx="400" cy="265" r="110" fill="#f97316"/>
+  <path d="M338 228c20-45 57-56 86-28 29-28 66-17 86 28-10 57-47 96-86 96s-76-39-86-96z" fill="#fff3dc"/><circle cx="372" cy="250" r="15" fill="#55a630"/><circle cx="455" cy="260" r="15" fill="#55a630"/><circle cx="414" cy="289" r="13" fill="#ffd166"/>
+  <text x="400" y="470" text-anchor="middle" font-family="Arial, sans-serif" font-size="30" font-weight="700" fill="#0d1b2a">FlavorHub</text>
+</svg>

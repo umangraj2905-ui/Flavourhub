@@ -1,0 +1,5 @@
+const db=require('../models/db');
+exports.list=async(_q,res,next)=>{try{const[r]=await db.execute('SELECT * FROM categories ORDER BY category_name');res.json(r)}catch(e){next(e)}};
+exports.create=async(req,res,next)=>{try{if(!req.body.category_name?.trim())return res.status(400).json({message:'Category name is required.'});const[r]=await db.execute('INSERT INTO categories(category_name) VALUES(?)',[req.body.category_name.trim()]);res.status(201).json({id:r.insertId,message:'Category added.'})}catch(e){e.code==='ER_DUP_ENTRY'?res.status(409).json({message:'Category already exists.'}):next(e)}};
+exports.update=async(req,res,next)=>{try{await db.execute('UPDATE categories SET category_name=? WHERE id=?',[req.body.category_name,req.params.id]);res.json({message:'Category updated.'})}catch(e){next(e)}};
+exports.remove=async(req,res,next)=>{try{await db.execute('DELETE FROM categories WHERE id=?',[req.params.id]);res.json({message:'Category deleted.'})}catch(e){e.code==='ER_ROW_IS_REFERENCED_2'?res.status(400).json({message:'Cannot delete a category that has food items.'}):next(e)}};

@@ -1,0 +1,1 @@
+const router=require('express').Router(),c=require('../controllers/adminController'),{authenticate,adminOnly}=require('../middleware/auth');router.use(authenticate,adminOnly);router.get('/dashboard',c.dashboard);router.get('/customers',c.customers);router.get('/orders',c.orders);module.exports=router;

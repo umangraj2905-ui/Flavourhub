@@ -1,0 +1,1 @@
+const router=require('express').Router(),c=require('../controllers/categoryController'),{authenticate,adminOnly}=require('../middleware/auth');router.get('/',c.list);router.post('/',authenticate,adminOnly,c.create);router.put('/:id',authenticate,adminOnly,c.update);router.delete('/:id',authenticate,adminOnly,c.remove);module.exports=router;

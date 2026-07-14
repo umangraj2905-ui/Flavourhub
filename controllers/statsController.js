@@ -1,0 +1,2 @@
+const db=require('../models/db');
+exports.publicStats=async(_req,res,next)=>{try{const[[customers],[foods],[delivered],[categories]]=await Promise.all([db.execute("SELECT COUNT(*) total FROM users WHERE role='customer'"),db.execute('SELECT COUNT(*) total FROM food_items'),db.execute("SELECT COUNT(*) total FROM orders WHERE status='Delivered'"),db.execute('SELECT COUNT(*) total FROM categories')]);res.json({totalCustomers:customers[0].total,totalFoodItems:foods[0].total,deliveredOrders:delivered[0].total,totalCategories:categories[0].total})}catch(error){next(error)}};

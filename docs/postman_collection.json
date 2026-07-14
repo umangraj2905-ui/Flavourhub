@@ -1,0 +1,10 @@
+{
+  "info":{"name":"FlavorHub API","schema":"https://schema.getpostman.com/json/collection/v2.1.0/collection.json"},
+  "variable":[{"key":"baseUrl","value":"http://localhost:3000/api"},{"key":"token","value":""}],
+  "item":[
+    {"name":"Register","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{baseUrl}}/register","body":{"mode":"raw","raw":"{\n  \"name\": \"Student\", \"email\": \"student@example.com\", \"phone\": \"9876543210\", \"password\": \"Student@123\", \"address\": \"College Hostel\"\n}"}}},
+    {"name":"Login","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{baseUrl}}/login","body":{"mode":"raw","raw":"{\"email\":\"student@example.com\",\"password\":\"Student@123\"}"}}},
+    {"name":"Get Foods","request":{"method":"GET","url":"{{baseUrl}}/foods"}},
+    {"name":"Get Cart","request":{"method":"GET","header":[{"key":"Authorization","value":"Bearer {{token}}"}],"url":"{{baseUrl}}/cart"}}
+  ]
+}

@@ -1,0 +1,2 @@
+const router=require('express').Router(),c=require('../controllers/foodController'),{authenticate,adminOnly}=require('../middleware/auth'),upload=require('../middleware/upload');
+router.get('/',c.list);router.get('/:id',c.getOne);router.post('/',authenticate,adminOnly,upload.single('image'),c.create);router.put('/:id',authenticate,adminOnly,upload.single('image'),c.update);router.delete('/:id',authenticate,adminOnly,c.remove);module.exports=router;

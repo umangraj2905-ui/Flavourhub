@@ -1,0 +1,1 @@
+const router=require('express').Router(),c=require('../controllers/orderController'),{authenticate,adminOnly}=require('../middleware/auth');router.use(authenticate);router.post('/',c.place);router.get('/',c.list);router.get('/:id/invoice',c.invoice);router.get('/:id',c.getOne);router.put('/:id',adminOnly,c.updateStatus);module.exports=router;
