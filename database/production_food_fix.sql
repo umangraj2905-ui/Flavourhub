@@ -2,6 +2,11 @@
 -- Safe to run more than once: it only fills missing image/nutrition values.
 -- Select the Railway `railway` database in MySQL Workbench before running.
 
+-- Workbench safe-update mode rejects these name-based repairs even though each
+-- statement has a precise WHERE clause. Restore the setting at the end.
+SET @OLD_SQL_SAFE_UPDATES = @@SQL_SAFE_UPDATES;
+SET SQL_SAFE_UPDATES = 0;
+
 UPDATE food_items
 SET
   image = COALESCE(NULLIF(image, ''), '/uploads/food/margherita-pizza.png'),
@@ -82,3 +87,5 @@ SELECT id, name, image, calories, protein, carbohydrates, fat, health_score
 FROM food_items
 WHERE name IN ('Margherita Pizza', 'Veggie Burger', 'Paneer Butter Masala', 'Cold Coffee', 'Chocolate Brownie')
 ORDER BY id;
+
+SET SQL_SAFE_UPDATES = @OLD_SQL_SAFE_UPDATES;
