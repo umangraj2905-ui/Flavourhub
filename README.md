@@ -65,3 +65,11 @@ git commit -m "Build food ordering system"
 ```
 
 See [API documentation](docs/API.md) and [ER diagram](docs/ER-DIAGRAM.md).
+
+## Repair missing production food images and health data
+
+If the menu shows blank images or the health meter says that nutrition is unavailable,
+the production `food_items` rows need their optional image/nutrition columns filled.
+Open `database/production_food_fix.sql` in MySQL Workbench, select the Railway
+`railway` schema, and click the lightning (Execute) button. The script is safe to
+run repeatedly and does not delete or replace existing values.
