@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 const db = require('./models/db');
 
@@ -29,11 +30,36 @@ app.get('/health/database', async (_req, res) => {
   catch { res.status(503).json({ status: 'unavailable' }); }
 });
 
-// Each named page uses one beginner-friendly single-page UI; the page value controls the content.
+// The browser still enhances these pages with public/js/app.js, but each route
+// also gets useful server-rendered content. This makes direct requests, crawlers,
+// and users with JavaScript disabled see the correct page instead of an empty shell.
+const pageTitles = {
+  home: 'FlavorHub | Food Ordering', menu: 'Menu | FlavorHub', offers: 'Offers | FlavorHub',
+  login: 'Login | FlavorHub', register: 'Register | FlavorHub', about: 'About | FlavorHub',
+  contact: 'Contact | FlavorHub'
+};
+function initialPageMarkup(page) {
+  const pages = {
+    home: '<section class="container py-5"><h1>Fresh food, delivered fast.</h1><p>Restaurant-quality meals from FlavorHub.</p><a href="/menu">Explore Menu</a></section>',
+    menu: '<section class="container py-5"><h1>Our Menu</h1><input aria-label="Search food" placeholder="Search food by name"><div class="menu-food-card"><h2>Featured Food</h2><span>Price</span><button type="button">Add to Cart</button></div></section>',
+    offers: '<section class="container py-5"><h1>Today’s Best Offers</h1><article class="offer-card"><h2>Welcome Offer</h2><p>Save on your first order.</p><button type="button">Copy Coupon</button></article></section>',
+    login: '<section class="container py-5"><h1>Welcome back</h1><form id="serverAuthFallback"><label>Email<input type="email" name="email" required></label><label>Password<input type="password" name="password" required></label><button type="submit">Login</button></form></section>',
+    register: '<section class="container py-5"><h1>Create your account</h1><form><label>Email<input type="email" name="email" required></label><label>Password<input type="password" name="password" required></label><button type="submit">Register</button></form></section>',
+    about: '<section class="container py-5"><h1>About FlavorHub</h1><p>FlavorHub is an online food ordering system for fresh, convenient meals.</p></section>',
+    contact: '<section class="container py-5"><h1>Contact FlavorHub</h1><p>Call +91 98765 43210 or email hello@flavorhub.test.</p><form id="contactForm"><label>Name<input name="name" required></label><label>Email<input type="email" name="email" required></label><label>Message<textarea name="message" required></textarea></label><button type="submit">Send Message</button></form></section>'
+  };
+  return pages[page] || '<section class="container py-5"><h1>FlavorHub</h1></section>';
+}
+function renderPage(page) {
+  const template = fs.readFileSync(path.join(__dirname, 'views', 'index.html'), 'utf8');
+  const title = pageTitles[page] || 'FlavorHub | Food Ordering';
+  return template.replace(/<title>[^<]*<\/title>/i, `<title>${title}</title>`)
+    .replace('<main id="app"></main>', `<main id="app" data-server-page="${page}">${initialPageMarkup(page)}</main>`);
+}
 const pages = ['','about','contact','offers','login','register','menu','food-details','cart','checkout','order-confirmation','order-history','dashboard','admin-login','admin-dashboard','manage-food','manage-categories','manage-orders','manage-customers'];
-pages.forEach(page => app.get(`/${page}`, (_req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html'))));
+pages.forEach(page => app.get(`/${page}`, (_req, res) => res.type('html').send(renderPage(page || 'home'))));
 // Friendly aliases used by common links and bookmarks.
-['/orders', '/profile', '/admin/login'].forEach(route => app.get(route, (_req, res) => res.sendFile(path.join(__dirname, 'views', 'index.html'))));
+[['/orders', 'order-history'], ['/profile', 'profile'], ['/admin/login', 'admin-login']].forEach(([route, page]) => app.get(route, (_req, res) => res.type('html').send(renderPage(page))));
 // Keep API errors JSON and prevent unknown browser URLs from silently showing Home.
 app.use('/api', (_req, res) => res.status(404).json({ message: 'API route not found.' }));
 app.use((_req, res) => res.status(404).send('Page not found.'));
