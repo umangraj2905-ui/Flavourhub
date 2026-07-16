@@ -1,5 +1,6 @@
 const db = require('../models/db');
 const PDFDocument = require('pdfkit');
+const couponTotals = require('../models/couponTotals');
 
 const methods = ['Cash on Delivery', 'UPI Demo', 'Card Demo'];
 const relationships = ['Friend', 'Family', 'Colleague', 'Other'];
@@ -37,22 +38,26 @@ exports.place = async (req, res, next) => {
     const [addressRows] = await conn.execute('SELECT address FROM users WHERE id=?', [req.user.id]);
     const address = recipient.orderFor === 'self' ? clean(req.body.delivery_address || addressRows[0]?.address) : recipient.recipientAddress;
     if (!address) throw new Error('A delivery address is required.');
-    const [items] = await conn.execute('SELECT c.food_id,c.quantity,f.price FROM cart c JOIN food_items f ON f.id=c.food_id WHERE c.user_id=? AND f.availability=1', [req.user.id]);
+    const [savedCoupon] = await conn.execute('SELECT coupon_code FROM cart_coupons WHERE user_id=?', [req.user.id]);
+    const totals = await couponTotals.calculate(conn, req.user.id, req.body.coupon_code || savedCoupon[0]?.coupon_code);
+    const items = totals.items;
     if (!items.length) throw new Error('Your cart is empty.');
-    const total = items.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0);
+    const total = totals.grandTotal;
     const [order] = await conn.execute(`INSERT INTO orders
       (user_id,total_amount,delivery_address,payment_method,payment_status,order_for,
        recipient_name,recipient_phone,recipient_address,recipient_landmark,
-       recipient_instructions,recipient_relationship,is_surprise,gift_message)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [req.user.id, total, address, paymentMethod, 'Pending', recipient.orderFor, recipient.recipientName, recipient.recipientPhone, recipient.recipientAddress, recipient.landmark, recipient.instructions, recipient.relationship, recipient.surprise, recipient.giftMessage]);
+       recipient_instructions,recipient_relationship,is_surprise,gift_message,
+       subtotal,delivery_fee,gst_amount,coupon_code,discount_amount,grand_total)
+      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [req.user.id, total, address, paymentMethod, 'Pending', recipient.orderFor, recipient.recipientName, recipient.recipientPhone, recipient.recipientAddress, recipient.landmark, recipient.instructions, recipient.relationship, recipient.surprise, recipient.giftMessage, totals.subtotal, totals.deliveryFee, totals.gst, totals.couponCode, totals.discount, totals.grandTotal]);
     for (const item of items) await conn.execute('INSERT INTO order_items(order_id,food_id,quantity,price) VALUES(?,?,?,?)', [order.insertId, item.food_id, item.quantity, item.price]);
     await conn.execute('DELETE FROM cart WHERE user_id=?', [req.user.id]);
+    await conn.execute('DELETE FROM cart_coupons WHERE user_id=?', [req.user.id]);
     await conn.commit();
     res.status(201).json({ message: recipient.orderFor === 'someone_else' ? `Order placed for ${recipient.recipientName}.` : 'Order placed successfully.', order_id: order.insertId, total_amount: total, payment_method: paymentMethod, payment_status: 'Pending', order_for: recipient.orderFor, recipient_name: recipient.recipientName });
   } catch (error) {
     if (conn) await conn.rollback();
     const validation = ['Enter a recipient', 'Enter a valid recipient', 'Enter a delivery', 'One of the optional', 'Choose a valid', 'Confirm that', 'A delivery', 'Your cart'];
-    if (validation.some(text => error.message?.startsWith(text))) return res.status(400).json({ message: error.message });
+    if (error.status === 400 || validation.some(text => error.message?.startsWith(text))) return res.status(400).json({ message: error.message });
     next(error);
   } finally { if (conn) conn.release(); }
 };

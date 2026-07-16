@@ -81,3 +81,14 @@ service Console (or run `database/order_recipient_migration.sql` in Workbench).
 Existing orders remain self-orders. Checkout then offers **Myself** and
 **Someone Else** choices; recipient details belong to the purchaser's order and
 are never saved as the purchaser's profile.
+
+## Coupons and offers
+
+The coupon feature is server-validated. Run `node scripts/ensureCouponTables.js` once
+in the Railway Flavorhub service Console after deploying (or run the matching SQL
+migration in `database/coupon_migration.sql`). The script creates the `offers` and
+`cart_coupons` tables, adds missing order-total columns, and seeds `WELCOME10`,
+`SAVE50`, `FIRSTORDER`, and `FREEDEL`. Customers apply a code in Cart; checkout,
+order history, invoices, and admin totals use the same server-calculated subtotal,
+delivery fee, GST, discount, and grand total. Coupons are never trusted from browser
+prices and invalid/minimum-order codes return a clear message.

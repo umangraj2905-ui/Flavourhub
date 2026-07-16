@@ -21,6 +21,7 @@ app.use('/api/foods', require('./routes/foodRoutes'));
 app.use('/api/categories', require('./routes/categoryRoutes'));
 app.use('/api/cart', require('./routes/cartRoutes'));
 app.use('/api/orders', require('./routes/orderRoutes'));
+app.use('/api/coupons', require('./routes/couponRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.get('/api/public/stats', require('./controllers/statsController').publicStats);
 // Railway uses this lightweight endpoint to confirm that the process is alive.

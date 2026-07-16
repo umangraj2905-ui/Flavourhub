@@ -71,7 +71,41 @@ CREATE TABLE orders (
   recipient_relationship VARCHAR(50) DEFAULT NULL,
   is_surprise BOOLEAN NOT NULL DEFAULT FALSE,
   gift_message VARCHAR(200) DEFAULT NULL,
+  subtotal DECIMAL(10,2) NOT NULL DEFAULT 0,
+  delivery_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
+  gst_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+  coupon_code VARCHAR(40) DEFAULT NULL,
+  discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+  grand_total DECIMAL(10,2) NOT NULL DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE offers (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  title VARCHAR(120) NOT NULL,
+  coupon_code VARCHAR(40) NOT NULL UNIQUE,
+  discount_type ENUM('percentage','flat','free_delivery') NOT NULL,
+  discount_value DECIMAL(10,2) NOT NULL DEFAULT 0,
+  minimum_order DECIMAL(10,2) NOT NULL DEFAULT 0,
+  maximum_discount DECIMAL(10,2) DEFAULT NULL,
+  starts_at DATETIME DEFAULT NULL,
+  ends_at DATETIME DEFAULT NULL,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  usage_limit INT DEFAULT NULL,
+  per_user_limit INT NOT NULL DEFAULT 1,
+  category_id INT DEFAULT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+);
+
+CREATE TABLE cart_coupons (
+  user_id INT PRIMARY KEY,
+  offer_id INT NOT NULL,
+  coupon_code VARCHAR(40) NOT NULL,
+  discount_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE
 );
 
 CREATE TABLE order_items (
