@@ -73,3 +73,11 @@ the production `food_items` rows need their optional image/nutrition columns fil
 Open `database/production_food_fix.sql` in MySQL Workbench, select the Railway
 `railway` schema, and click the lightning (Execute) button. The script is safe to
 run repeatedly and does not delete or replace existing values.
+
+## Order for Someone Else
+
+Run `node scripts/ensureRecipientColumns.js` once in the Railway FlavorHub
+service Console (or run `database/order_recipient_migration.sql` in Workbench).
+Existing orders remain self-orders. Checkout then offers **Myself** and
+**Someone Else** choices; recipient details belong to the purchaser's order and
+are never saved as the purchaser's profile.

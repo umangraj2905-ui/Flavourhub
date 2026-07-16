@@ -62,6 +62,15 @@ CREATE TABLE orders (
   payment_status VARCHAR(20) NOT NULL DEFAULT 'Pending',
   payment_reference VARCHAR(100) DEFAULT NULL,
   paid_at TIMESTAMP NULL DEFAULT NULL,
+  order_for ENUM('self','someone_else') NOT NULL DEFAULT 'self',
+  recipient_name VARCHAR(100) DEFAULT NULL,
+  recipient_phone VARCHAR(20) DEFAULT NULL,
+  recipient_address VARCHAR(500) DEFAULT NULL,
+  recipient_landmark VARCHAR(150) DEFAULT NULL,
+  recipient_instructions VARCHAR(300) DEFAULT NULL,
+  recipient_relationship VARCHAR(50) DEFAULT NULL,
+  is_surprise BOOLEAN NOT NULL DEFAULT FALSE,
+  gift_message VARCHAR(200) DEFAULT NULL,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT
 );
 
