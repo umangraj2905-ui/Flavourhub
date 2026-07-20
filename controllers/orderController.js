@@ -43,12 +43,41 @@ exports.place = async (req, res, next) => {
     const items = totals.items;
     if (!items.length) throw new Error('Your cart is empty.');
     const total = totals.grandTotal;
-    const [order] = await conn.execute(`INSERT INTO orders
-      (user_id,total_amount,delivery_address,payment_method,payment_status,order_for,
-       recipient_name,recipient_phone,recipient_address,recipient_landmark,
-       recipient_instructions,recipient_relationship,is_surprise,gift_message,
-       subtotal,delivery_fee,gst_amount,coupon_code,discount_amount,grand_total)
-      VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`, [req.user.id, total, address, paymentMethod, 'Pending', recipient.orderFor, recipient.recipientName, recipient.recipientPhone, recipient.recipientAddress, recipient.landmark, recipient.instructions, recipient.relationship, recipient.surprise, recipient.giftMessage, totals.subtotal, totals.deliveryFee, totals.gst, totals.couponCode, totals.discount, totals.grandTotal]);
+    // Railway may temporarily have an older schema while migrations are being
+    // applied. Save all columns that exist instead of failing the whole order.
+    const [columnRows] = await conn.execute(
+      "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='orders'"
+    );
+    const existing = new Set(columnRows.map(row => row.COLUMN_NAME));
+    const orderData = {
+      user_id: req.user.id,
+      total_amount: total,
+      delivery_address: address,
+      payment_method: paymentMethod,
+      payment_status: 'Pending',
+      order_for: recipient.orderFor,
+      recipient_name: recipient.recipientName,
+      recipient_phone: recipient.recipientPhone,
+      recipient_address: recipient.recipientAddress,
+      recipient_landmark: recipient.landmark,
+      recipient_instructions: recipient.instructions,
+      recipient_relationship: recipient.relationship,
+      is_surprise: recipient.surprise,
+      gift_message: recipient.giftMessage,
+      subtotal: totals.subtotal,
+      delivery_fee: totals.deliveryFee,
+      gst_amount: totals.gst,
+      coupon_code: totals.couponCode,
+      discount_amount: totals.discount,
+      grand_total: totals.grandTotal
+    };
+    const columns = Object.keys(orderData).filter(column => existing.has(column));
+    const values = columns.map(column => orderData[column]);
+    const placeholders = columns.map(() => '?').join(',');
+    const [order] = await conn.execute(
+      `INSERT INTO orders (${columns.join(',')}) VALUES (${placeholders})`,
+      values
+    );
     for (const item of items) await conn.execute('INSERT INTO order_items(order_id,food_id,quantity,price) VALUES(?,?,?,?)', [order.insertId, item.food_id, item.quantity, item.price]);
     await conn.execute('DELETE FROM cart WHERE user_id=?', [req.user.id]);
     await conn.execute('DELETE FROM cart_coupons WHERE user_id=?', [req.user.id]);
