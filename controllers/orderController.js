@@ -29,6 +29,7 @@ function recipientData(body) {
 // Totals always come from current database prices, never from the browser.
 exports.place = async (req, res, next) => {
   let conn;
+  let stage = 'starting';
   try {
     const paymentMethod = methods.includes(req.body.payment_method) ? req.body.payment_method : 'Cash on Delivery';
     const recipient = recipientData(req.body);
@@ -38,6 +39,7 @@ exports.place = async (req, res, next) => {
     const [addressRows] = await conn.execute('SELECT address FROM users WHERE id=?', [req.user.id]);
     const address = recipient.orderFor === 'self' ? clean(req.body.delivery_address || addressRows[0]?.address) : recipient.recipientAddress;
     if (!address) throw new Error('A delivery address is required.');
+    stage = 'loading coupon';
     const [savedCoupon] = await conn.execute('SELECT coupon_code FROM cart_coupons WHERE user_id=?', [req.user.id]);
     const totals = await couponTotals.calculate(conn, req.user.id, req.body.coupon_code || savedCoupon[0]?.coupon_code);
     const items = totals.items;
@@ -74,11 +76,14 @@ exports.place = async (req, res, next) => {
     const columns = Object.keys(orderData).filter(column => existing.has(column));
     const values = columns.map(column => orderData[column]);
     const placeholders = columns.map(() => '?').join(',');
+    stage = 'creating order';
     const [order] = await conn.execute(
       `INSERT INTO orders (${columns.join(',')}) VALUES (${placeholders})`,
       values
     );
+    stage = 'saving order items';
     for (const item of items) await conn.execute('INSERT INTO order_items(order_id,food_id,quantity,price) VALUES(?,?,?,?)', [order.insertId, item.food_id, item.quantity, item.price]);
+    stage = 'clearing cart';
     await conn.execute('DELETE FROM cart WHERE user_id=?', [req.user.id]);
     await conn.execute('DELETE FROM cart_coupons WHERE user_id=?', [req.user.id]);
     await conn.commit();
@@ -87,6 +92,8 @@ exports.place = async (req, res, next) => {
     if (conn) await conn.rollback();
     const validation = ['Enter a recipient', 'Enter a valid recipient', 'Enter a delivery', 'One of the optional', 'Choose a valid', 'Confirm that', 'A delivery', 'Your cart'];
     if (error.status === 400 || validation.some(text => error.message?.startsWith(text))) return res.status(400).json({ message: error.message });
+    console.error('ORDER_PLACE_FAILED', { stage, code: error.code, message: error.message });
+    if (process.env.NODE_ENV === 'production') return res.status(500).json({ message: `Order failed while ${stage}. Error code: ${error.code || 'UNKNOWN'}.` });
     next(error);
   } finally { if (conn) conn.release(); }
 };
