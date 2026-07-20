@@ -93,7 +93,6 @@ exports.place = async (req, res, next) => {
     const validation = ['Enter a recipient', 'Enter a valid recipient', 'Enter a delivery', 'One of the optional', 'Choose a valid', 'Confirm that', 'A delivery', 'Your cart'];
     if (error.status === 400 || validation.some(text => error.message?.startsWith(text))) return res.status(400).json({ message: error.message });
     console.error('ORDER_PLACE_FAILED', { stage, code: error.code, message: error.message });
-    if (process.env.NODE_ENV === 'production') return res.status(500).json({ message: `Order failed while ${stage}. Error code: ${error.code || 'UNKNOWN'}.` });
     next(error);
   } finally { if (conn) conn.release(); }
 };
